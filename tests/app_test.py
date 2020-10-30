@@ -75,8 +75,33 @@ def test_messages(client):
     assert b"&lt;Hello&gt;" in rv.data
     assert b"<strong>HTML</strong> allowed here" in rv.data
 
+
 def test_delete_message(client):
+    """This is the test to determine whether the login functionality works"""
     """Ensure the messages are being deleted"""
-    rv = client.get('/delete/1')
+    rv = client.get("/delete/1")
+    data = json.loads(rv.data)
+    assert data["status"] == 0
+    login(client, app.config["USERNAME"], app.config["PASSWORD"])
+    rv = client.get("/delete/1")
     data = json.loads(rv.data)
     assert data["status"] == 1
+
+
+def test_search_and_login(client):
+    """Ensure the posts can be searched and that the authentiation system works"""
+    # add a dummy post to be searched
+    login(client, app.config["USERNAME"], app.config["PASSWORD"])
+    client.post(
+        "/add",
+        data=dict(title="Test"),
+        follow_redirects=True,
+    )
+
+    # search for that post
+    rv = client.get("/search/?query=test")
+    assert b"Test" in rv.data
+
+    # search for different post
+    rv = client.get("/search/?query=random")
+    assert b"Test" not in rv.data
